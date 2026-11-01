@@ -1,0 +1,62 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Role-Based Access Control (RBAC){% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="page-title"><i class="bi bi-shield-lock me-2 text-primary"></i>Role Permissions Matrix</h2>
+    <p class="text-muted mb-0">Role-Based Access Control (RBAC) security boundaries configured across all tiers</p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm border-top border-danger border-4 h-100">
+      <div class="card-body">
+        <h5 class="card-title fw-bold text-danger"><i class="bi bi-shield-shaded me-2"></i>Admin (Superuser)</h5>
+        <p class="text-muted small">Complete system and operational authority.</p>
+        <ul class="list-unstyled small mb-0">
+          <li class="py-1 text-success"><i class="bi bi-check-circle-fill me-2"></i>All academic entity CRUD</li>
+          <li class="py-1 text-success"><i class="bi bi-check-circle-fill me-2"></i>Faculty & Student account registration</li>
+          <li class="py-1 text-success"><i class="bi bi-check-circle-fill me-2"></i>Fee management & payments</li>
+          <li class="py-1 text-success"><i class="bi bi-check-circle-fill me-2"></i>Audit logs & system configuration</li>
+          <li class="py-1 text-success"><i class="bi bi-check-circle-fill me-2"></i>Publish official transcripts</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm border-top border-success border-4 h-100">
+      <div class="card-body">
+        <h5 class="card-title fw-bold text-success"><i class="bi bi-mortarboard me-2"></i>Faculty / Professor</h5>
+        <p class="text-muted small">Broad academic authority scoped to assigned classes.</p>
+        <ul class="list-unstyled small mb-0">
+          <li class="py-1 text-success"><i class="bi bi-check-circle-fill me-2"></i>Mark & update classroom attendance</li>
+          <li class="py-1 text-success"><i class="bi bi-check-circle-fill me-2"></i>Create & schedule MCQ examinations</li>
+          <li class="py-1 text-success"><i class="bi bi-check-circle-fill me-2"></i>Enter internal & external marks</li>
+          <li class="py-1 text-success"><i class="bi bi-check-circle-fill me-2"></i>Upload assignments & study materials (S3)</li>
+          <li class="py-1 text-danger"><i class="bi bi-x-circle-fill me-2"></i>Cannot create login accounts or edit fees</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm border-top border-info border-4 h-100">
+      <div class="card-body">
+        <h5 class="card-title fw-bold text-info"><i class="bi bi-person me-2"></i>Student</h5>
+        <p class="text-muted small">Restricted personal view-only and exam participation access.</p>
+        <ul class="list-unstyled small mb-0">
+          <li class="py-1 text-success"><i class="bi bi-check-circle-fill me-2"></i>View personal attendance analytics</li>
+          <li class="py-1 text-success"><i class="bi bi-check-circle-fill me-2"></i>Attempt scheduled MCQ exams</li>
+          <li class="py-1 text-success"><i class="bi bi-check-circle-fill me-2"></i>View semester published grades</li>
+          <li class="py-1 text-success"><i class="bi bi-check-circle-fill me-2"></i>Submit assignments & download notes</li>
+          <li class="py-1 text-danger"><i class="bi bi-x-circle-fill me-2"></i>No access to other students or answers</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,366 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Register New Student{% endblock %}
+{% block breadcrumb %}Admin &rsaquo; <a href="{{ url_for('admin.students') }}" class="text-decoration-none">Students</a> &rsaquo; Add Student{% endblock %}
+
+{% block extra_css %}
+<style>
+  .tab-pane { animation: fadeIn .2s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+  .step-indicator { display:flex; gap:0; margin-bottom:28px; }
+  .step-indicator .step {
+    flex:1; text-align:center; position:relative;
+    padding-bottom:12px;
+  }
+  .step-indicator .step::after {
+    content:''; position:absolute; top:16px; left:50%; right:-50%;
+    height:2px; background:#dee2e6; z-index:0;
+  }
+  .step-indicator .step:last-child::after { display:none; }
+  .step-indicator .step.active .step-circle  { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .step-indicator .step.done  .step-circle  { background:#16a34a; color:#fff; border-color:#16a34a; }
+  .step-circle {
+    width:34px; height:34px; border-radius:50%;
+    background:#fff; border:2px solid #dee2e6; color:#aaa;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-weight:700; position:relative; z-index:1; font-size:.85rem;
+  }
+  .step-label { font-size:.72rem; color:#888; margin-top:4px; }
+  .step.active .step-label { color:var(--accent); font-weight:600; }
+  .step.done .step-label { color:#16a34a; font-weight:600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h4 class="mb-1"><i class="bi bi-person-plus me-2 text-primary"></i>Register New Student</h4>
+  <p class="text-muted mb-0 small">Fill in all required fields to register a new student</p>
+</div>
+
+<div class="card">
+  <div class="card-body p-4">
+
+    <!-- Step indicator -->
+    <div class="step-indicator" id="stepIndicator">
+      <div class="step active" data-step="1">
+        <div class="step-circle">1</div>
+        <div class="step-label">Personal Info</div>
+      </div>
+      <div class="step" data-step="2">
+        <div class="step-circle">2</div>
+        <div class="step-label">Academic Info</div>
+      </div>
+      <div class="step" data-step="3">
+        <div class="step-circle">3</div>
+        <div class="step-label">Address &amp; Guardian</div>
+      </div>
+      <div class="step" data-step="4">
+        <div class="step-circle">4</div>
+        <div class="step-label">Documents</div>
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.add_student') }}" enctype="multipart/form-data" id="addStudentForm" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <!-- Tab 1: Personal Info -->
+      <div class="tab-section" id="tab-1">
+        <h5 class="mb-4 text-primary fw-700"><i class="bi bi-person me-2"></i>Personal Information</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">First Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="first_name" value="{{ form.first_name.data if form else '' }}" required>
+            <div class="invalid-feedback">First name is required.</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Last Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="last_name" value="{{ form.last_name.data if form else '' }}" required>
+            <div class="invalid-feedback">Last name is required.</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+            <input type="email" class="form-control" name="email" value="{{ form.email.data if form else '' }}" required>
+            <div class="invalid-feedback">Valid email is required.</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Username <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="username" value="{{ form.username.data if form else '' }}" required>
+            <div class="invalid-feedback">Username is required.</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <input type="password" class="form-control" name="password" id="passwordInput" required>
+              <button class="btn btn-outline-secondary" type="button" onclick="togglePwd('passwordInput', this)">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+            <div class="invalid-feedback">Password is required.</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Date of Birth <span class="text-danger">*</span></label>
+            <input type="date" class="form-control" name="date_of_birth" value="{{ form.date_of_birth.data if form else '' }}" required>
+            <div class="invalid-feedback">Date of birth is required.</div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Gender <span class="text-danger">*</span></label>
+            <select class="form-select" name="gender" required>
+              <option value="">Select Gender</option>
+              <option value="male"   {% if form and form.gender.data == 'male'   %}selected{% endif %}>Male</option>
+              <option value="female" {% if form and form.gender.data == 'female' %}selected{% endif %}>Female</option>
+              <option value="other"  {% if form and form.gender.data == 'other'  %}selected{% endif %}>Other</option>
+            </select>
+            <div class="invalid-feedback">Gender is required.</div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Blood Group</label>
+            <select class="form-select" name="blood_group">
+              <option value="">Select</option>
+              {% for bg in ['A+','A-','B+','B-','AB+','AB-','O+','O-'] %}
+              <option value="{{ bg }}" {% if form and form.blood_group.data == bg %}selected{% endif %}>{{ bg }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Phone Number</label>
+            <input type="tel" class="form-control" name="phone" value="{{ form.phone.data if form else '' }}" placeholder="+91 XXXXX XXXXX">
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Academic Info -->
+      <div class="tab-section d-none" id="tab-2">
+        <h5 class="mb-4 text-primary fw-700"><i class="bi bi-mortarboard me-2"></i>Academic Information</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Roll Number <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="roll_number" value="{{ form.roll_number.data if form else '' }}" required>
+            <div class="invalid-feedback">Roll number is required.</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Registration Number</label>
+            <input type="text" class="form-control" name="registration_number" value="{{ form.registration_number.data if form else '' }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Department <span class="text-danger">*</span></label>
+            <select class="form-select" name="department_id" id="departmentSelect" required>
+              <option value="">Select Department</option>
+              {% for dept in departments %}
+              <option value="{{ dept.id }}" {% if form and form.department_id.data == dept.id %}selected{% endif %}>{{ dept.name }}</option>
+              {% endfor %}
+            </select>
+            <div class="invalid-feedback">Department is required.</div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Semester <span class="text-danger">*</span></label>
+            <select class="form-select" name="current_semester" id="semesterSelect" required>
+              <option value="">Select</option>
+              {% for i in range(1, 9) %}
+              <option value="{{ i }}" {% if form and form.current_semester.data == i %}selected{% endif %}>Semester {{ i }}</option>
+              {% endfor %}
+            </select>
+            <div class="invalid-feedback">Semester is required.</div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Class Section <span class="text-danger">*</span></label>
+            <select class="form-select" name="class_section_id" id="classSectionSelect" required>
+              <option value="">Select Section</option>
+            </select>
+            <div class="invalid-feedback">Class section is required.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Address & Guardian -->
+      <div class="tab-section d-none" id="tab-3">
+        <div class="row g-4">
+          <div class="col-md-6">
+            <h5 class="mb-3 text-primary fw-700"><i class="bi bi-geo-alt me-2"></i>Address</h5>
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label fw-semibold">Street Address</label>
+                <textarea class="form-control" name="address" rows="2">{{ form.address.data if form else '' }}</textarea>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">City</label>
+                <input type="text" class="form-control" name="city" value="{{ form.city.data if form else '' }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">State</label>
+                <input type="text" class="form-control" name="state" value="{{ form.state.data if form else '' }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Pincode</label>
+                <input type="text" class="form-control" name="pincode" value="{{ form.pincode.data if form else '' }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Country</label>
+                <input type="text" class="form-control" name="country" value="{{ form.country.data if form else 'India' }}">
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <h5 class="mb-3 text-primary fw-700"><i class="bi bi-person-heart me-2"></i>Guardian Information</h5>
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label fw-semibold">Guardian Name</label>
+                <input type="text" class="form-control" name="guardian_name" value="{{ form.guardian_name.data if form else '' }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Guardian Phone</label>
+                <input type="tel" class="form-control" name="guardian_phone" value="{{ form.guardian_phone.data if form else '' }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Relation</label>
+                <select class="form-select" name="guardian_relation">
+                  <option value="">Select</option>
+                  <option value="father">Father</option>
+                  <option value="mother">Mother</option>
+                  <option value="sibling">Sibling</option>
+                  <option value="spouse">Spouse</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Guardian Email</label>
+                <input type="email" class="form-control" name="guardian_email" value="{{ form.guardian_email.data if form else '' }}">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 4: Documents -->
+      <div class="tab-section d-none" id="tab-4">
+        <h5 class="mb-4 text-primary fw-700"><i class="bi bi-file-earmark-image me-2"></i>Documents &amp; Photo</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Profile Photo</label>
+            <input type="file" class="form-control" name="profile_photo" id="profilePhotoInput" accept="image/*"
+                   onchange="previewPhoto(this)">
+            <div class="form-text">Accepted: JPG, PNG, GIF. Max size: 2MB</div>
+          </div>
+          <div class="col-md-6 d-flex align-items-center">
+            <div id="photoPreview" class="d-none">
+              <img id="previewImg" src="" alt="Preview" class="rounded" style="max-height:140px;border:2px solid #dee2e6;">
+            </div>
+            <div id="photoPlaceholder" class="d-flex align-items-center justify-content-center border border-2 border-dashed rounded" style="width:140px;height:140px;border-style:dashed!important;color:#aaa;">
+              <div class="text-center">
+                <i class="bi bi-person-bounding-box" style="font-size:2.5rem;"></i>
+                <div class="small mt-1">Photo Preview</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation buttons -->
+      <div class="d-flex justify-content-between mt-5 pt-4 border-top">
+        <button type="button" class="btn btn-outline-secondary" id="prevBtn" onclick="navigateTab(-1)" style="display:none!important;" disabled>
+          <i class="bi bi-arrow-left me-1"></i>Previous
+        </button>
+        <div></div>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-primary" id="nextBtn" onclick="navigateTab(1)">
+            Next <i class="bi bi-arrow-right ms-1"></i>
+          </button>
+          <button type="submit" class="btn btn-success d-none" id="submitBtn" form="addStudentForm">
+            <i class="bi bi-check-lg me-1"></i>Register Student
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentTab = 1;
+const totalTabs = 4;
+
+function navigateTab(direction) {
+  if (direction === 1 && !validateTab(currentTab)) return;
+
+  document.getElementById(`tab-${currentTab}`).classList.add('d-none');
+  currentTab += direction;
+  document.getElementById(`tab-${currentTab}`).classList.remove('d-none');
+
+  // Update step indicator
+  document.querySelectorAll('.step').forEach((step, i) => {
+    const num = i + 1;
+    step.classList.remove('active', 'done');
+    if (num < currentTab)  step.classList.add('done');
+    if (num === currentTab) step.classList.add('active');
+  });
+
+  document.getElementById('prevBtn').style.display = currentTab === 1 ? 'none' : '';
+  document.getElementById('prevBtn').disabled = currentTab === 1;
+  document.getElementById('nextBtn').classList.toggle('d-none', currentTab === totalTabs);
+  document.getElementById('submitBtn').classList.toggle('d-none', currentTab !== totalTabs);
+}
+
+function validateTab(tabNum) {
+  const tab = document.getElementById(`tab-${tabNum}`);
+  const required = tab.querySelectorAll('[required]');
+  let valid = true;
+  required.forEach(el => {
+    if (!el.value.trim()) { el.classList.add('is-invalid'); valid = false; }
+    else { el.classList.remove('is-invalid'); }
+  });
+  return valid;
+}
+
+function togglePwd(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const icon = btn.querySelector('i');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.className = 'bi bi-eye-slash';
+  } else {
+    input.type = 'password';
+    icon.className = 'bi bi-eye';
+  }
+}
+
+function previewPhoto(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('previewImg').src = e.target.result;
+      document.getElementById('photoPreview').classList.remove('d-none');
+      document.getElementById('photoPlaceholder').classList.add('d-none');
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+/* Dynamic class section loading */
+function loadClassSections() {
+  const deptId = document.getElementById('departmentSelect').value;
+  const sem    = document.getElementById('semesterSelect').value;
+  const select = document.getElementById('classSectionSelect');
+  select.innerHTML = '<option value="">Loading…</option>';
+
+  if (!deptId || !sem) {
+    select.innerHTML = '<option value="">Select Section</option>';
+    return;
+  }
+
+  fetchWithCsrf(`/admin/api/class-sections?department_id=${deptId}&semester=${sem}`)
+    .then(r => r.json())
+    .then(data => {
+      select.innerHTML = '<option value="">Select Section</option>';
+      (data.sections || []).forEach(sec => {
+        const opt = document.createElement('option');
+        opt.value = sec.id;
+        opt.textContent = sec.name;
+        select.appendChild(opt);
+      });
+    })
+    .catch(() => { select.innerHTML = '<option value="">Failed to load</option>'; });
+}
+
+document.getElementById('departmentSelect').addEventListener('change', loadClassSections);
+document.getElementById('semesterSelect').addEventListener('change', loadClassSections);
+</script>
+{% endblock %}

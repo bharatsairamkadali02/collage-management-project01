@@ -1,0 +1,40 @@
+# =============================================================================
+# College Management System – Example Terraform Variable Values
+# =============================================================================
+# INSTRUCTIONS:
+#   1. Copy this file:  cp terraform.tfvars.example terraform.tfvars
+#   2. Replace every placeholder value with real values.
+#   3. NEVER commit terraform.tfvars to version control (it's in .gitignore).
+# =============================================================================
+
+# ── AWS ───────────────────────────────────────────────────────────────────────
+aws_region   = "ap-south-1"
+project_name = "college-management"
+environment  = "production"
+
+# ── Networking ────────────────────────────────────────────────────────────────
+# (defaults match variables.tf – uncomment to override)
+# vpc_cidr                = "10.0.0.0/16"
+# public_subnet_cidr      = "10.0.1.0/24"
+# private_subnet_az1_cidr = "10.0.2.0/24"
+# private_subnet_az2_cidr = "10.0.3.0/24"
+
+# ── EC2 ───────────────────────────────────────────────────────────────────────
+ec2_instance_type = "t3.small"
+key_pair_name     = "your-key-pair-name"                # ← replace with your EC2 Key Pair name
+
+# Restrict to your public IP for security in production, e.g. "203.0.113.10/32"
+allowed_ssh_cidr  = "YOUR_IP/32"
+
+# ── Database (RDS MySQL) ───────────────────────────────────────────────────────
+db_username        = "college_admin"
+db_password        = "YourSecureDBPassword123!"          # ← use a strong password
+rds_instance_class = "db.t3.micro"
+
+# ── S3 ────────────────────────────────────────────────────────────────────────
+# Must be globally unique across all AWS accounts
+s3_bucket_name = "your-college-cms-bucket-unique-name"  # ← replace with a unique name
+
+# ── Application ───────────────────────────────────────────────────────────────
+# Leave empty to use the EC2 public IP, or set your domain:
+app_domain = "college.yourdomain.com"

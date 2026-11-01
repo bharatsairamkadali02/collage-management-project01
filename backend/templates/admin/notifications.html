@@ -1,0 +1,111 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}System Notifications{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="page-title"><i class="bi bi-bell me-2 text-primary"></i>Institution Notifications</h2>
+    <p class="text-muted mb-0">Broadcast campus-wide notices, exam alerts, or targeted classroom updates</p>
+  </div>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newNoticeModal">
+    <i class="bi bi-megaphone me-1"></i> Send New Notification
+  </button>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Title & Message</th>
+            <th>Type</th>
+            <th>Audience</th>
+            <th>Sent By</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for n in notifications %}
+          <tr>
+            <td class="ps-4" style="max-width: 400px;">
+              <div class="fw-semibold">{{ n.title }}</div>
+              <small class="text-muted text-truncate d-block">{{ n.message }}</small>
+            </td>
+            <td>
+              {% if n.notification_type == 'urgent' %}
+              <span class="badge bg-danger">Urgent</span>
+              {% elif n.notification_type == 'exam' %}
+              <span class="badge bg-warning text-dark">Exam</span>
+              {% elif n.notification_type == 'academic' %}
+              <span class="badge bg-info text-dark">Academic</span>
+              {% else %}
+              <span class="badge bg-secondary">General</span>
+              {% endif %}
+            </td>
+            <td><span class="badge bg-light text-dark border text-capitalize">{{ n.target_role or 'All Users' }}</span></td>
+            <td>{{ n.sender.get_full_name() if n.sender else 'System' }}</td>
+            <td><small class="text-muted">{{ n.created_at.strftime('%d %b %Y %H:%M') if n.created_at else '' }}</small></td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="text-center py-5 text-muted">
+              No notifications dispatched yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Send Notification Modal -->
+<div class="modal fade" id="newNoticeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Dispatch Notification</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('admin.send_notification') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Subject / Title <span class="text-danger">*</span></label>
+            <input type="text" name="title" class="form-control" required placeholder="e.g. Campus Holiday Notice">
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">Target Audience</label>
+              <select name="target_role" class="form-select">
+                <option value="all">Everyone</option>
+                <option value="student">Students Only</option>
+                <option value="faculty">Faculty Only</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Category</label>
+              <select name="notification_type" class="form-select">
+                <option value="general">General</option>
+                <option value="academic">Academic</option>
+                <option value="exam">Examination</option>
+                <option value="urgent">Urgent Alert</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Notice Body <span class="text-danger">*</span></label>
+            <textarea name="message" class="form-control" rows="4" required placeholder="Write details here..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Send Announcement</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

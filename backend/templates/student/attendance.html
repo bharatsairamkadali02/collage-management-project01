@@ -1,0 +1,102 @@
+{% extends "student/base_student.html" %}
+
+{% block title %}My Attendance{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+  <h2 class="page-title"><i class="bi bi-calendar-check me-2 text-primary"></i>My Attendance Analytics</h2>
+  <p class="text-muted mb-0">Track your mandatory minimum 75% attendance threshold per subject</p>
+</div>
+
+<!-- Overall stats card -->
+<div class="row g-4 mb-4">
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm p-4 text-center">
+      <div class="text-muted small fw-semibold">Overall Attendance</div>
+      <div class="display-6 fw-bold {% if summary.percentage >= 75 %}text-success{% elif summary.percentage >= 60 %}text-warning{% else %}text-danger{% endif %} my-2">
+        {{ summary.percentage }}%
+      </div>
+      <span class="badge {% if summary.percentage >= 75 %}bg-success-subtle text-success{% elif summary.percentage >= 60 %}bg-warning-subtle text-warning{% else %}bg-danger-subtle text-danger{% endif %}">
+        {{ summary.status }}
+      </span>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm p-4 text-center">
+      <div class="text-muted small fw-semibold">Total Classes</div>
+      <div class="display-6 fw-bold text-primary my-2">{{ summary.total }}</div>
+      <small class="text-muted">Recorded Sessions</small>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm p-4 text-center">
+      <div class="text-muted small fw-semibold">Classes Attended</div>
+      <div class="display-6 fw-bold text-success my-2">{{ summary.present + summary.late }}</div>
+      <small class="text-muted">Present &amp; Late</small>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm p-4 text-center">
+      <div class="text-muted small fw-semibold">Classes Missed</div>
+      <div class="display-6 fw-bold text-danger my-2">{{ summary.absent }}</div>
+      <small class="text-muted">Absent Sessions</small>
+    </div>
+  </div>
+</div>
+
+<!-- Subject-wise table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white border-bottom py-3">
+    <h5 class="card-title fw-bold mb-0">Subject-Wise Breakdown</h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Subject</th>
+            <th>Total Sessions</th>
+            <th>Attended</th>
+            <th>Absent</th>
+            <th style="width: 250px;">Percentage</th>
+            <th>Standing</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in subject_stats %}
+          <tr>
+            <td class="ps-4 fw-semibold">{{ s.subject.subject_name }} ({{ s.subject.subject_code }})</td>
+            <td>{{ s.total }}</td>
+            <td class="text-success fw-bold">{{ s.present + s.late }}</td>
+            <td class="text-danger fw-bold">{{ s.absent }}</td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="progress flex-grow-1" style="height: 8px;">
+                  <div class="progress-bar {% if s.percentage >= 75 %}bg-success{% elif s.percentage >= 60 %}bg-warning{% else %}bg-danger{% endif %}" style="width: {{ s.percentage }}%;"></div>
+                </div>
+                <span class="fw-bold">{{ s.percentage }}%</span>
+              </div>
+            </td>
+            <td>
+              {% if s.percentage >= 75 %}
+              <span class="badge bg-success-subtle text-success">Eligible</span>
+              {% elif s.percentage >= 60 %}
+              <span class="badge bg-warning-subtle text-warning">Warning</span>
+              {% else %}
+              <span class="badge bg-danger-subtle text-danger">Shortage</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center py-5 text-muted">
+              No subject attendance sessions recorded yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

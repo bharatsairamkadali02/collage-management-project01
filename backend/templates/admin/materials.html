@@ -1,0 +1,70 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Study Materials Repository{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="page-title"><i class="bi bi-folder2-open me-2 text-primary"></i>Study Materials & Cloud Assets</h2>
+    <p class="text-muted mb-0">Central repository of lecture notes, syllabi, and reference materials stored in private Amazon S3</p>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Title & Description</th>
+            <th>Subject</th>
+            <th>Type</th>
+            <th>Uploaded By</th>
+            <th>Uploaded Date</th>
+            <th class="text-end pe-4">Download</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in materials %}
+          <tr>
+            <td class="ps-4">
+              <div class="fw-semibold">{{ m.title }}</div>
+              <small class="text-muted">{{ m.file_name }}</small>
+            </td>
+            <td>{{ m.subject.subject_name if m.subject else 'N/A' }}</td>
+            <td><span class="badge bg-secondary-subtle text-secondary text-capitalize">{{ m.material_type }}</span></td>
+            <td>{{ m.faculty.user.get_full_name() if m.faculty and m.faculty.user else 'Faculty' }}</td>
+            <td><small class="text-muted">{{ m.created_at.strftime('%d %b %Y') if m.created_at else '' }}</small></td>
+            <td class="text-end pe-4">
+              <button class="btn btn-sm btn-outline-primary" onclick="downloadS3Material({{ m.id }})">
+                <i class="bi bi-cloud-download me-1"></i> Presigned S3 Link
+              </button>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center py-5 text-muted">
+              No study materials uploaded yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+function downloadS3Material(id) {
+  fetch(`/student/materials/${id}/download`)
+    .then(r => r.json())
+    .then(d => {
+      if (d.success && d.download_url) {
+        window.open(d.download_url, '_blank');
+      } else {
+        alert(d.message || 'Unable to generate download URL');
+      }
+    });
+}
+</script>
+{% endblock %}

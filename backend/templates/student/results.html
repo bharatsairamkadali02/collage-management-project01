@@ -1,0 +1,131 @@
+{% extends "student/base_student.html" %}
+
+{% block title %}My Academic Results{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+  <h2 class="page-title"><i class="bi bi-award me-2 text-primary"></i>My Results &amp; Transcripts</h2>
+  <p class="text-muted mb-0">Official published semester grades and online MCQ examination scores</p>
+</div>
+
+<!-- Academic Summary -->
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm p-4 text-center">
+      <div class="text-muted small fw-semibold">Overall Percentage</div>
+      <div class="display-6 fw-bold text-primary my-2">{{ summary.percentage }}%</div>
+      <span class="badge bg-primary-subtle text-primary">SGPA Grade: {{ summary.overall_grade }}</span>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm p-4 text-center">
+      <div class="text-muted small fw-semibold">Total Marks Secured</div>
+      <div class="display-6 fw-bold text-success my-2">{{ summary.total_marks }} / {{ summary.max_marks }}</div>
+      <small class="text-muted">Evaluated Subjects</small>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm p-4 text-center">
+      <div class="text-muted small fw-semibold">Academic Status</div>
+      <div class="display-6 fw-bold {% if summary.all_passed %}text-success{% else %}text-danger{% endif %} my-2">
+        {% if summary.all_passed %}ALL CLEARED{% else %}BACKLOG PENDING{% endif %}
+      </div>
+      <span class="badge {% if summary.all_passed %}bg-success-subtle text-success{% else %}bg-danger-subtle text-danger{% endif %}">
+        Verified Transcript
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- Semester Marks Table -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white border-bottom py-3">
+    <h5 class="card-title fw-bold mb-0">Semester Subject Marks</h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Subject</th>
+            <th>Internal (40)</th>
+            <th>External (60)</th>
+            <th>Total Marks</th>
+            <th>Percentage</th>
+            <th>Grade</th>
+            <th>Outcome</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in summary.results %}
+          <tr>
+            <td class="ps-4 fw-semibold">{{ r.subject_name }}</td>
+            <td>{{ r.internal_marks or 0 }}</td>
+            <td>{{ r.external_marks or 0 }}</td>
+            <td class="fw-bold">{{ r.total_marks or 0 }} / {{ r.max_total_marks or 100 }}</td>
+            <td>{{ r.percentage }}%</td>
+            <td><span class="badge bg-primary fs-6">{{ r.grade }}</span></td>
+            <td>
+              {% if r.is_passed %}
+              <span class="badge bg-success-subtle text-success">PASS</span>
+              {% else %}
+              <span class="badge bg-danger-subtle text-danger">FAIL</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="text-center py-4 text-muted">No published semester results yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MCQ Exam Attempts Table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white border-bottom py-3">
+    <h5 class="card-title fw-bold mb-0">Online MCQ Examination History</h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Exam Title</th>
+            <th>Subject</th>
+            <th>Score Obtained</th>
+            <th>Percentage</th>
+            <th>Submitted On</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in attempts %}
+          <tr>
+            <td class="ps-4 fw-semibold">{{ a.exam.title if a.exam else 'MCQ Test' }}</td>
+            <td>{{ a.exam.subject.subject_name if a.exam and a.exam.subject else 'N/A' }}</td>
+            <td class="fw-bold">{{ a.score_obtained or 0 }} / {{ a.total_marks_attempted or 0 }}</td>
+            <td>{{ a.percentage }}%</td>
+            <td><small class="text-muted">{{ a.submitted_at.strftime('%d %b %Y %H:%M') if a.submitted_at else 'In Progress' }}</small></td>
+            <td>
+              {% if a.is_passed %}
+              <span class="badge bg-success-subtle text-success">PASSED</span>
+              {% else %}
+              <span class="badge bg-danger-subtle text-danger">FAILED</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center py-4 text-muted">No online MCQ tests attempted yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

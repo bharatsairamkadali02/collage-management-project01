@@ -1,0 +1,238 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block breadcrumb %}Admin &rsaquo; Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between">
+  <div>
+    <h4 class="mb-1"><i class="bi bi-speedometer2 me-2 text-primary"></i>Admin Dashboard</h4>
+    <p class="text-muted mb-0 small">Welcome back, <strong>{{ current_user.get_full_name() }}</strong> &mdash; {{ now.strftime('%A, %d %B %Y') if now else '' }}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('admin.students') }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus me-1"></i>Add Student</a>
+    <a href="{{ url_for('admin.faculty') }}"  class="btn btn-sm btn-primary"><i class="bi bi-plus me-1"></i>Add Faculty</a>
+  </div>
+</div>
+
+<!-- ── Stats Row ── -->
+<div class="row g-3 mb-4">
+  {% set stat_cards = [
+    ('Total Students',   stats.total_students   | default(0), 'bi-mortarboard-fill',   '#2563eb', '#eff6ff'),
+    ('Total Faculty',    stats.total_faculty    | default(0), 'bi-person-workspace',   '#16a34a', '#f0fdf4'),
+    ('Total Departments',stats.total_departments| default(0), 'bi-building-fill',      '#d97706', '#fffbeb'),
+    ('Total Subjects',   stats.total_subjects   | default(0), 'bi-book-fill',          '#7c3aed', '#f5f3ff'),
+  ] %}
+  {% for label, value, icon, color, bg in stat_cards %}
+  <div class="col-6 col-xl-3">
+    <div class="card h-100">
+      <div class="card-body d-flex align-items-center gap-3 py-3">
+        <div style="width:52px;height:52px;border-radius:14px;background:{{ bg }};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="bi {{ icon }}" style="font-size:1.5rem;color:{{ color }};"></i>
+        </div>
+        <div>
+          <div style="font-size:1.7rem;font-weight:800;line-height:1;color:{{ color }};">{{ value }}</div>
+          <div class="text-muted small mt-1">{{ label }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- ── Row 2 ── -->
+<div class="row g-3 mb-4">
+
+  <!-- Recent Registrations -->
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <h6 class="mb-0 fw-700"><i class="bi bi-person-plus me-2 text-primary"></i>Recent Student Registrations</h6>
+        <a href="{{ url_for('admin.students') }}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3">Name</th>
+                <th>Roll No</th>
+                <th>Department</th>
+                <th>Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for student in recent_students %}
+              <tr>
+                <td class="ps-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:32px;height:32px;font-size:.8rem;font-weight:700;flex-shrink:0;">
+                      {{ student.first_name[0].upper() }}
+                    </div>
+                    <span class="fw-semibold small">{{ student.first_name }} {{ student.last_name }}</span>
+                  </div>
+                </td>
+                <td class="small text-muted">{{ student.roll_number }}</td>
+                <td class="small">{{ student.department.name if student.department else '—' }}</td>
+                <td class="small text-muted">{{ student.created_at.strftime('%d %b %Y') if student.created_at else '—' }}</td>
+                <td>
+                  <span class="badge bg-{{ 'success' if student.status == 'active' else 'danger' if student.status == 'dropped' else 'warning' if student.status == 'suspended' else 'info' }}">
+                    {{ student.status | title }}
+                  </span>
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="text-center text-muted py-4">No recent registrations</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upcoming Examinations -->
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <h6 class="mb-0"><i class="bi bi-clipboard-check me-2 text-warning"></i>Upcoming Examinations</h6>
+        <a href="{{ url_for('admin.examinations') }}" class="btn btn-sm btn-outline-warning">View All</a>
+      </div>
+      <div class="card-body p-0">
+        {% if upcoming_exams %}
+        <ul class="list-group list-group-flush">
+          {% for exam in upcoming_exams %}
+          <li class="list-group-item py-3 px-3">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fw-semibold small">{{ exam.title }}</div>
+                <div class="text-muted" style="font-size:.75rem;">{{ exam.subject.name if exam.subject else '—' }}</div>
+                <div class="text-muted" style="font-size:.75rem;"><i class="bi bi-calendar3 me-1"></i>{{ exam.start_datetime.strftime('%d %b %Y, %H:%M') if exam.start_datetime else '—' }}</div>
+              </div>
+              <span class="badge bg-{{ 'primary' if exam.status == 'published' else 'success' if exam.status == 'active' else 'secondary' }}">{{ exam.status | title }}</span>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="text-center text-muted py-5">
+          <i class="bi bi-calendar-x" style="font-size:2rem;"></i>
+          <p class="mt-2 small">No upcoming examinations</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Row 3 ── -->
+<div class="row g-3 mb-4">
+
+  <!-- Attendance Overview -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header bg-white py-3">
+        <h6 class="mb-0"><i class="bi bi-calendar-check me-2 text-success"></i>Attendance Overview</h6>
+      </div>
+      <div class="card-body">
+        {% if attendance_stats %}
+          {% for dept_stat in attendance_stats %}
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span class="small fw-semibold">{{ dept_stat.department }}</span>
+              <span class="small text-muted">{{ dept_stat.percentage | round(1) }}%</span>
+            </div>
+            <div class="progress" style="height:8px;border-radius:4px;">
+              <div class="progress-bar bg-{{ 'success' if dept_stat.percentage >= 75 else 'warning' if dept_stat.percentage >= 60 else 'danger' }}"
+                   role="progressbar"
+                   style="width:{{ dept_stat.percentage }}%">
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-center text-muted py-4">
+            <i class="bi bi-bar-chart" style="font-size:2.5rem; opacity:.3;"></i>
+            <p class="mt-2 small">No attendance data available</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Fee Collection -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header bg-white py-3">
+        <h6 class="mb-0"><i class="bi bi-cash-coin me-2 text-info"></i>Fee Collection Summary</h6>
+      </div>
+      <div class="card-body">
+        {% set collected_pct = ((fee_summary.collected / fee_summary.total * 100) | round(1)) if fee_summary and fee_summary.total else 0 %}
+        <div class="row g-3 mb-3">
+          <div class="col-4 text-center">
+            <div class="text-muted small">Total</div>
+            <div class="fw-bold text-dark">₹{{ fee_summary.total | default(0) | int | format_currency }}</div>
+          </div>
+          <div class="col-4 text-center">
+            <div class="text-muted small">Collected</div>
+            <div class="fw-bold text-success">₹{{ fee_summary.collected | default(0) | int | format_currency }}</div>
+          </div>
+          <div class="col-4 text-center">
+            <div class="text-muted small">Pending</div>
+            <div class="fw-bold text-danger">₹{{ fee_summary.pending | default(0) | int | format_currency }}</div>
+          </div>
+        </div>
+        <div class="mb-1 d-flex justify-content-between">
+          <span class="small text-muted">Collection progress</span>
+          <span class="small fw-semibold">{{ collected_pct }}%</span>
+        </div>
+        <div class="progress" style="height:12px;border-radius:6px;">
+          <div class="progress-bar bg-success" role="progressbar" style="width:{{ collected_pct }}%"></div>
+        </div>
+        <div class="mt-3 d-flex gap-2">
+          <span class="badge bg-success-subtle text-success">
+            <i class="bi bi-check2-circle me-1"></i>{{ fee_summary.paid_count | default(0) }} Paid
+          </span>
+          <span class="badge bg-danger-subtle text-danger">
+            <i class="bi bi-x-circle me-1"></i>{{ fee_summary.pending_count | default(0) }} Pending
+          </span>
+          <span class="badge bg-warning-subtle text-warning">
+            <i class="bi bi-exclamation-triangle me-1"></i>{{ fee_summary.overdue_count | default(0) }} Overdue
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Recent Notifications ── -->
+<div class="card">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+    <h6 class="mb-0"><i class="bi bi-bell me-2 text-secondary"></i>Recent Notifications</h6>
+    <a href="{{ url_for('admin.notifications') }}" class="btn btn-sm btn-outline-secondary">Manage</a>
+  </div>
+  <div class="card-body p-0">
+    {% if recent_notifications %}
+    <ul class="list-group list-group-flush">
+      {% for notif in recent_notifications[:6] %}
+      <li class="list-group-item py-2 px-3 d-flex align-items-start gap-3">
+        <i class="bi bi-{{ 'bell' if notif.type == 'general' else 'book' if notif.type == 'academic' else 'clipboard' if notif.type == 'exam' else 'cash' if notif.type == 'fee' else 'exclamation-triangle' }} text-{{ 'secondary' if notif.type == 'general' else 'primary' if notif.type == 'academic' else 'warning' if notif.type == 'exam' else 'success' if notif.type == 'fee' else 'danger' }} mt-1"></i>
+        <div class="flex-grow-1">
+          <div class="small fw-semibold">{{ notif.title }}</div>
+          <div class="text-muted" style="font-size:.75rem;">{{ notif.message[:80] }}{% if notif.message | length > 80 %}…{% endif %}</div>
+        </div>
+        <span class="text-muted" style="font-size:.72rem;white-space:nowrap;">{{ notif.created_at.strftime('%d %b') if notif.created_at else '' }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="text-center text-muted py-4">
+      <i class="bi bi-bell-slash" style="font-size:2rem;"></i>
+      <p class="mt-2 small">No recent notifications</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

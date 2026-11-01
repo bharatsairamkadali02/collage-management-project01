@@ -1,0 +1,138 @@
+{% extends "faculty/base_faculty.html" %}
+
+{% block page_title %}Examinations{% endblock %}
+
+{% block faculty_content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h5 class="fw-bold mb-1">Examinations</h5>
+    <p class="text-muted mb-0 small">Create, manage and publish online examinations</p>
+  </div>
+  <a href="/faculty/examinations/create" class="btn" style="background:#0d6e6e;color:#fff;">
+    <i class="bi bi-plus-circle me-2"></i>Create New Exam
+  </a>
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <form method="GET" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label fw-semibold small">Subject</label>
+        <select name="subject" class="form-select">
+          <option value="">All Subjects</option>
+          {% for subj in assigned_subjects | default([
+            {'id':1,'name':'Data Structures'},{'id':2,'name':'Algorithms'},{'id':3,'name':'DBMS'}
+          ]) %}
+          <option value="{{ subj.id }}" {% if request.args.get('subject') == subj.id|string %}selected{% endif %}>{{ subj.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold small">Class Section</label>
+        <select name="section" class="form-select">
+          <option value="">All Sections</option>
+          {% for section in assigned_sections | default(['CS-3A','CS-3B','CS-4A']) %}
+          <option value="{{ section }}" {% if request.args.get('section') == section %}selected{% endif %}>{{ section }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-semibold small">Status</label>
+        <select name="status" class="form-select">
+          <option value="">All Statuses</option>
+          <option value="draft" {% if request.args.get('status')=='draft' %}selected{% endif %}>Draft</option>
+          <option value="published" {% if request.args.get('status')=='published' %}selected{% endif %}>Published</option>
+          <option value="active" {% if request.args.get('status')=='active' %}selected{% endif %}>Active</option>
+          <option value="closed" {% if request.args.get('status')=='closed' %}selected{% endif %}>Closed</option>
+        </select>
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn flex-grow-1" style="background:#0d6e6e;color:#fff;">Filter</button>
+        <a href="/faculty/examinations" class="btn btn-outline-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Examinations Table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white border-bottom py-3">
+    <h6 class="mb-0 fw-bold"><i class="bi bi-clipboard-check me-2" style="color:#0d6e6e;"></i>All Examinations</h6>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-3">Title</th>
+            <th>Subject</th>
+            <th>Class</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Duration</th>
+            <th>Questions</th>
+            <th>Max Marks</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for exam in exams | default([
+            {'id':1,'title':'Mid-Term DS','subject':'Data Structures','section':'CS-3A','start':'15 Nov 10:00','end':'15 Nov 11:00','duration':60,'questions':30,'max_marks':100,'status':'published'},
+            {'id':2,'title':'Algo Unit Test','subject':'Algorithms','section':'CS-3B','start':'18 Nov 14:00','end':'18 Nov 14:45','duration':45,'questions':20,'max_marks':50,'status':'draft'},
+            {'id':3,'title':'DBMS Quiz 3','subject':'DBMS','section':'CS-4A','start':'20 Nov 11:00','end':'20 Nov 11:30','duration':30,'questions':15,'max_marks':30,'status':'closed'}
+          ]) %}
+          <tr>
+            <td class="ps-3 fw-semibold">{{ exam.title }}</td>
+            <td class="text-muted small">{{ exam.subject }}</td>
+            <td><span class="badge bg-light text-dark border">{{ exam.section }}</span></td>
+            <td class="small text-muted">{{ exam.start }}</td>
+            <td class="small text-muted">{{ exam.end }}</td>
+            <td class="small">{{ exam.duration }} min</td>
+            <td class="text-center">{{ exam.questions }}</td>
+            <td class="text-center">{{ exam.max_marks }}</td>
+            <td>
+              {% if exam.status == 'published' %}
+                <span class="badge bg-success">Published</span>
+              {% elif exam.status == 'active' %}
+                <span class="badge bg-primary">Active</span>
+              {% elif exam.status == 'draft' %}
+                <span class="badge bg-secondary">Draft</span>
+              {% elif exam.status == 'closed' %}
+                <span class="badge bg-dark">Closed</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="d-flex gap-1 flex-wrap">
+                <a href="/faculty/examinations/{{ exam.id }}/questions" class="btn btn-xs btn-outline-primary" style="font-size:0.72rem;padding:2px 7px;" title="Manage Questions"><i class="bi bi-question-circle"></i></a>
+                <a href="/faculty/examinations/{{ exam.id }}/edit" class="btn btn-xs btn-outline-secondary" style="font-size:0.72rem;padding:2px 7px;" title="Edit"><i class="bi bi-pencil"></i></a>
+                {% if exam.status == 'draft' %}
+                <form method="POST" action="/faculty/examinations/{{ exam.id }}/publish" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+                  <button class="btn btn-xs btn-outline-success" style="font-size:0.72rem;padding:2px 7px;" title="Publish"><i class="bi bi-send"></i></button>
+                </form>
+                {% endif %}
+                {% if exam.status in ['published','active'] %}
+                <form method="POST" action="/faculty/examinations/{{ exam.id }}/close" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}">
+                  <button class="btn btn-xs btn-outline-danger" style="font-size:0.72rem;padding:2px 7px;" title="Close"><i class="bi bi-x-circle"></i></button>
+                </form>
+                {% endif %}
+                <a href="/faculty/examinations/{{ exam.id }}/results" class="btn btn-xs btn-outline-info" style="font-size:0.72rem;padding:2px 7px;" title="View Results"><i class="bi bi-bar-chart"></i></a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if not exams %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-clipboard-x fs-1 d-block mb-2"></i>
+      No examinations found. <a href="/faculty/examinations/create">Create one now.</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock faculty_content %}

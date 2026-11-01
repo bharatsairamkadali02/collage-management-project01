@@ -1,0 +1,63 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}System Settings{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="page-title"><i class="bi bi-gear me-2 text-primary"></i>System & Cloud Architecture Settings</h2>
+    <p class="text-muted mb-0">Production environment parameters, AWS EC2, Amazon RDS, and Amazon S3 topology</p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3">
+        <h5 class="card-title fw-bold mb-0"><i class="bi bi-cloud-check me-2 text-warning"></i>AWS Cloud Infrastructure Status</h5>
+      </div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-5 text-muted">AWS Region:</dt>
+          <dd class="col-sm-7"><span class="badge bg-primary">ap-south-1 (Mumbai)</span></dd>
+
+          <dt class="col-sm-5 text-muted">Application Tier:</dt>
+          <dd class="col-sm-7">Ubuntu 24.04 LTS (Nginx + Gunicorn + Flask)</dd>
+
+          <dt class="col-sm-5 text-muted">Database Tier:</dt>
+          <dd class="col-sm-7">Amazon RDS MySQL 8.0 (Private Subnet Group)</dd>
+
+          <dt class="col-sm-5 text-muted">Object Storage:</dt>
+          <dd class="col-sm-7">Amazon S3 (Private Bucket + Presigned Access)</dd>
+
+          <dt class="col-sm-5 text-muted">EC2 IAM Role:</dt>
+          <dd class="col-sm-7"><span class="badge bg-success-subtle text-success">Active (Instance Profile)</span></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3">
+        <h5 class="card-title fw-bold mb-0"><i class="bi bi-shield-lock me-2 text-success"></i>Security & Session Policies</h5>
+      </div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-5 text-muted">Password Hash:</dt>
+          <dd class="col-sm-7">Werkzeug PBKDF2 / SHA256</dd>
+
+          <dt class="col-sm-5 text-muted">Session Timeout:</dt>
+          <dd class="col-sm-7">8 Hours (Secure Cookie)</dd>
+
+          <dt class="col-sm-5 text-muted">CSRF Protection:</dt>
+          <dd class="col-sm-7"><span class="badge bg-success">Flask-WTF Enabled</span></dd>
+
+          <dt class="col-sm-5 text-muted">Max Upload Size:</dt>
+          <dd class="col-sm-7">50 MB</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

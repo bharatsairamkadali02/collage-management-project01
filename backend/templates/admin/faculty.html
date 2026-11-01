@@ -1,0 +1,126 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Faculty Management{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="page-title"><i class="bi bi-person-workspace me-2 text-primary"></i>Faculty Management</h2>
+    <p class="text-muted mb-0">Manage professors, lecturers, and departmental allocations</p>
+  </div>
+  <a href="{{ url_for('admin.add_faculty') }}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i> Add Faculty
+  </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4 border-0 shadow-sm">
+  <div class="card-body">
+    <form method="GET" action="{{ url_for('admin.faculty') }}" class="row g-3">
+      <div class="col-md-5">
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+          <input type="text" name="search" class="form-control border-start-0 bg-light" placeholder="Search by name, employee ID, or email..." value="{{ request.args.get('search', '') }}">
+        </div>
+      </div>
+      <div class="col-md-4">
+        <select name="department_id" class="form-select bg-light">
+          <option value="">All Departments</option>
+          {% for d in departments %}
+          <option value="{{ d.id }}" {% if request.args.get('department_id')|int == d.id %}selected{% endif %}>{{ d.department_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-secondary w-100">Filter</button>
+        <a href="{{ url_for('admin.faculty') }}" class="btn btn-outline-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Faculty Table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">#</th>
+            <th>Faculty Member</th>
+            <th>Employee ID</th>
+            <th>Department</th>
+            <th>Designation</th>
+            <th>Status</th>
+            <th class="text-end pe-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in faculty_members %}
+          <tr>
+            <td class="ps-4">{{ loop.index }}</td>
+            <td>
+              <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3" style="width:40px;height:40px;font-weight:600;">
+                  {{ f.user.first_name[0] }}{{ f.user.last_name[0] }}
+                </div>
+                <div>
+                  <div class="fw-semibold">{{ f.user.get_full_name() }}</div>
+                  <small class="text-muted">{{ f.user.email }}</small>
+                </div>
+              </div>
+            </td>
+            <td><code>{{ f.employee_id }}</code></td>
+            <td>{{ f.department.department_name if f.department else 'N/A' }}</td>
+            <td><span class="badge bg-light text-dark border">{{ f.designation or 'Faculty' }}</span></td>
+            <td>
+              {% if f.user.is_active %}
+              <span class="badge bg-success-subtle text-success">Active</span>
+              {% else %}
+              <span class="badge bg-danger-subtle text-danger">Inactive</span>
+              {% endif %}
+            </td>
+            <td class="text-end pe-4">
+              <a href="{{ url_for('admin.edit_faculty', id=f.id) }}" class="btn btn-sm btn-outline-primary me-1">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDeleteFaculty({{ f.id }}, '{{ f.user.get_full_name() }}')">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="text-center py-5 text-muted">
+              <i class="bi bi-person-slash fs-1 d-block mb-2"></i>
+              No faculty members found matching your search.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+function confirmDeleteFaculty(id, name) {
+  if (confirm(`Are you sure you want to deactivate/delete faculty account for ${name}?`)) {
+    fetch(`/admin/faculty/${id}/delete`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || ''
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert(data.message || 'Error deleting faculty member.');
+      }
+    });
+  }
+}
+</script>
+{% endblock %}

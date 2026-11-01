@@ -1,0 +1,55 @@
+{% extends "student/base_student.html" %}
+
+{% block title %}My Notifications{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="page-title"><i class="bi bi-bell me-2 text-primary"></i>My Notifications</h2>
+    <p class="text-muted mb-0">Official updates from college administration and professors</p>
+  </div>
+  <button class="btn btn-outline-primary btn-sm" onclick="markAllNotificationsRead()">
+    <i class="bi bi-check2-all me-1"></i> Mark All as Read
+  </button>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="list-group list-group-flush">
+      {% for n in notifications %}
+      <div class="list-group-item p-3 {% if not n.is_read %}bg-light bg-opacity-75 border-start border-primary border-4{% endif %}">
+        <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+          <h6 class="mb-0 fw-bold {% if not n.is_read %}text-primary{% endif %}">{{ n.title }}</h6>
+          <small class="text-muted">{{ n.created_at.strftime('%d %b %Y %H:%M') if n.created_at else '' }}</small>
+        </div>
+        <p class="mb-2 text-muted">{{ n.message }}</p>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-secondary-subtle text-secondary text-capitalize">{{ n.notification_type }}</span>
+          <small class="text-muted">From: {{ n.sender.get_full_name() if n.sender else 'Administration' }}</small>
+        </div>
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-bell-slash fs-1 d-block mb-2"></i>
+        You have no notifications at this time.
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<script>
+function markAllNotificationsRead() {
+  fetch('/notifications/read-all', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || ''
+    }
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) location.reload();
+  });
+}
+</script>
+{% endblock %}

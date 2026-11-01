@@ -1,0 +1,204 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Students Management{% endblock %}
+{% block breadcrumb %}Admin &rsaquo; Students{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <div>
+    <h4 class="mb-1"><i class="bi bi-mortarboard me-2 text-primary"></i>Students Management</h4>
+    <p class="text-muted mb-0 small">Total: <strong>{{ pagination.total | default(0) }}</strong> students registered</p>
+  </div>
+  <a href="{{ url_for('admin.add_student') }}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i>Add Student
+  </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-3">
+  <div class="card-body py-3">
+    <form method="GET" action="{{ url_for('admin.students') }}" id="filterForm">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label small fw-semibold mb-1">Search</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" name="q" placeholder="Name, Roll No, Email…" value="{{ request.args.get('q','') }}">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small fw-semibold mb-1">Department</label>
+          <select class="form-select" name="department_id">
+            <option value="">All Departments</option>
+            {% for dept in departments %}
+            <option value="{{ dept.id }}" {% if request.args.get('department_id') == dept.id | string %}selected{% endif %}>{{ dept.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small fw-semibold mb-1">Semester</label>
+          <select class="form-select" name="semester">
+            <option value="">All Semesters</option>
+            {% for i in range(1, 9) %}
+            <option value="{{ i }}" {% if request.args.get('semester') == i | string %}selected{% endif %}>Semester {{ i }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small fw-semibold mb-1">Status</label>
+          <select class="form-select" name="status">
+            <option value="">All Status</option>
+            <option value="active"    {% if request.args.get('status') == 'active'    %}selected{% endif %}>Active</option>
+            <option value="dropped"   {% if request.args.get('status') == 'dropped'   %}selected{% endif %}>Dropped</option>
+            <option value="suspended" {% if request.args.get('status') == 'suspended' %}selected{% endif %}>Suspended</option>
+            <option value="graduated" {% if request.args.get('status') == 'graduated' %}selected{% endif %}>Graduated</option>
+          </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+          <button type="submit" class="btn btn-primary flex-grow-1"><i class="bi bi-funnel me-1"></i>Filter</button>
+          <a href="{{ url_for('admin.students') }}" class="btn btn-outline-secondary"><i class="bi bi-x-lg"></i></a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-3" style="width:40px;">#</th>
+            <th style="width:42px;">Photo</th>
+            <th>Name</th>
+            <th>Roll Number</th>
+            <th>Department</th>
+            <th>Semester</th>
+            <th>Status</th>
+            <th class="text-center" style="width:140px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in students %}
+          <tr>
+            <td class="ps-3 text-muted small">{{ loop.index + (pagination.page - 1) * pagination.per_page }}</td>
+            <td>
+              {% if student.profile_photo %}
+              <img src="{{ student.profile_photo }}" alt="Photo" class="rounded-circle" style="width:36px;height:36px;object-fit:cover;">
+              {% else %}
+              <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width:36px;height:36px;font-size:.85rem;">
+                {{ student.first_name[0].upper() }}
+              </div>
+              {% endif %}
+            </td>
+            <td>
+              <div class="fw-semibold small">{{ student.first_name }} {{ student.last_name }}</div>
+              <div class="text-muted" style="font-size:.74rem;">{{ student.email }}</div>
+            </td>
+            <td class="small">{{ student.roll_number }}</td>
+            <td class="small">{{ student.department.name if student.department else '—' }}</td>
+            <td class="small">Sem {{ student.current_semester | default('—') }}</td>
+            <td>
+              {% if student.status == 'active' %}
+                <span class="badge bg-success">Active</span>
+              {% elif student.status == 'dropped' %}
+                <span class="badge bg-danger">Dropped</span>
+              {% elif student.status == 'suspended' %}
+                <span class="badge bg-warning text-dark">Suspended</span>
+              {% elif student.status == 'graduated' %}
+                <span class="badge bg-info">Graduated</span>
+              {% else %}
+                <span class="badge bg-secondary">{{ student.status | title }}</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              <div class="btn-group btn-group-sm">
+                <a href="{{ url_for('admin.view_student', student_id=student.id) }}" class="btn btn-outline-primary" title="View"><i class="bi bi-eye"></i></a>
+                <a href="{{ url_for('admin.edit_student', student_id=student.id) }}" class="btn btn-outline-secondary" title="Edit"><i class="bi bi-pencil"></i></a>
+                <button class="btn btn-outline-danger" title="Delete"
+                        onclick="confirmDelete({{ student.id }}, '{{ student.first_name }} {{ student.last_name }}')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8" class="text-center text-muted py-5">
+            <i class="bi bi-person-x" style="font-size:2.5rem;opacity:.3;"></i>
+            <p class="mt-2">No students found</p>
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  {% if pagination and pagination.pages > 1 %}
+  <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2">
+    <small class="text-muted">
+      Showing {{ ((pagination.page - 1) * pagination.per_page) + 1 }}–{{ [pagination.page * pagination.per_page, pagination.total] | min }} of {{ pagination.total }}
+    </small>
+    <nav>
+      <ul class="pagination pagination-sm mb-0 gap-1">
+        <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('admin.students', page=pagination.prev_num, **request.args) }}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+          {% if page_num %}
+          <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('admin.students', page=page_num, **request.args) }}">{{ page_num }}</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+          <a class="page-link" href="{{ url_for('admin.students', page=pagination.next_num, **request.args) }}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Delete Student</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete student <strong id="deleteStudentName"></strong>?</p>
+        <p class="text-muted small">This action cannot be undone. All associated data will be permanently removed.</p>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <form id="deleteForm" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+
+function confirmDelete(studentId, studentName) {
+  document.getElementById('deleteStudentName').textContent = studentName;
+  document.getElementById('deleteForm').action = `/admin/students/${studentId}/delete`;
+  deleteModal.show();
+}
+</script>
+{% endblock %}

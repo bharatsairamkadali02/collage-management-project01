@@ -1,0 +1,62 @@
+[Unit]
+Description=College Management System - Gunicorn Application Server
+Documentation=https://github.com/your-org/college-management-system
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+
+# Run as dedicated non-root user
+User=appuser
+Group=appuser
+
+# Working directory (Flask app root)
+WorkingDirectory=/opt/college-app/backend
+
+# Python virtual environment PATH
+Environment=PATH=/opt/college-app/venv/bin
+
+# Load all application environment variables from .env file
+EnvironmentFile=/opt/college-app/.env
+
+# Gunicorn startup command
+# --workers     3        : 2 × CPU cores + 1  (adjust for instance type)
+# --worker-class sync    : synchronous workers (switch to gevent for async)
+# --bind             : listen on loopback only (Nginx reverse-proxies)
+# --timeout     120      : worker timeout in seconds
+# --keep-alive  5        : keep-alive connections
+# --access-logfile / --error-logfile : log to files (also captured by journald)
+ExecStart=/opt/college-app/venv/bin/gunicorn \
+    --workers 3 \
+    --worker-class sync \
+    --bind 127.0.0.1:8000 \
+    --timeout 120 \
+    --keep-alive 5 \
+    --max-requests 1000 \
+    --max-requests-jitter 100 \
+    --access-logfile /var/log/college-app/access.log \
+    --error-logfile /var/log/college-app/error.log \
+    --log-level info \
+    --capture-output \
+    "app:create_app()"
+
+# Graceful reload on SIGHUP
+ExecReload=/bin/kill -s HUP $MAINPID
+
+# Process management
+Restart=always
+RestartSec=5
+StartLimitInterval=60
+StartLimitBurst=3
+
+# Resource limits
+LimitNOFILE=65536
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=college-management
+
+[Install]
+WantedBy=multi-user.target

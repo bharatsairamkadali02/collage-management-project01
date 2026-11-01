@@ -1,0 +1,170 @@
+{% extends "faculty/base_faculty.html" %}
+
+{% block title %}Marks & Evaluation{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="page-title"><i class="bi bi-pencil-square me-2 text-success"></i>Internal & Semester Marks Entry</h2>
+    <p class="text-muted mb-0">Record internal assessment scores, external marks, and compute final grades</p>
+  </div>
+</div>
+
+<div class="card mb-4 border-0 shadow-sm">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Class Section</label>
+        <select id="marksClassSelect" class="form-select">
+          <option value="">Select Section...</option>
+          {% for cs in class_sections %}
+          <option value="{{ cs.id }}">{{ cs.section_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Subject</label>
+        <select id="marksSubjectSelect" class="form-select">
+          <option value="">Select Subject...</option>
+          {% for s in subjects %}
+          <option value="{{ s.id }}" data-int="{{ s.max_internal_marks or 40 }}" data-ext="{{ s.max_external_marks or 60 }}">{{ s.subject_name }} ({{ s.subject_code }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4 d-flex align-items-end">
+        <button class="btn btn-success w-100" onclick="loadClassStudents()">
+          <i class="bi bi-people me-1"></i> Load Students
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" id="marksTable">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Roll Number</th>
+            <th>Student Name</th>
+            <th style="width: 140px;">Internal (<span id="maxIntLabel">40</span>)</th>
+            <th style="width: 140px;">External (<span id="maxExtLabel">60</span>)</th>
+            <th>Total Marks</th>
+            <th>Calculated Grade</th>
+            <th class="text-end pe-4">Save</th>
+          </tr>
+        </thead>
+        <tbody id="marksTableBody">
+          <tr>
+            <td colspan="7" class="text-center py-5 text-muted">
+              Select class section and subject above to load students.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+function loadClassStudents() {
+  const classId = document.getElementById('marksClassSelect').value;
+  const subSelect = document.getElementById('marksSubjectSelect');
+  const subId = subSelect.value;
+
+  if (!classId || !subId) {
+    alert('Please select both class section and subject.');
+    return;
+  }
+
+  const selectedOpt = subSelect.options[subSelect.selectedIndex];
+  const maxInt = selectedOpt.dataset.int || 40;
+  const maxExt = selectedOpt.dataset.ext || 60;
+  document.getElementById('maxIntLabel').textContent = maxInt;
+  document.getElementById('maxExtLabel').textContent = maxExt;
+
+  const tbody = document.getElementById('marksTableBody');
+  tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Loading students...</td></tr>';
+
+  fetch(`/admin/api/students-in-class/${classId}`)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.students || data.students.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No students enrolled in this section.</td></tr>';
+        return;
+      }
+
+      let html = '';
+      data.students.forEach(s => {
+        html += `
+          <tr id="row-${s.id}">
+            <td class="ps-4 fw-bold"><code>${s.roll_number}</code></td>
+            <td class="fw-semibold">${s.name}</td>
+            <td>
+              <input type="number" id="int-${s.id}" class="form-control form-control-sm" value="0" min="0" max="${maxInt}" oninput="recalcGrade(${s.id}, ${maxInt}, ${maxExt})">
+            </td>
+            <td>
+              <input type="number" id="ext-${s.id}" class="form-control form-control-sm" value="0" min="0" max="${maxExt}" oninput="recalcGrade(${s.id}, ${maxInt}, ${maxExt})">
+            </td>
+            <td><strong id="tot-${s.id}">0</strong> / ${parseInt(maxInt)+parseInt(maxExt)}</td>
+            <td><span id="grd-${s.id}" class="badge bg-secondary">Pending</span></td>
+            <td class="text-end pe-4">
+              <button class="btn btn-sm btn-outline-success" onclick="saveStudentMark(${s.id}, ${subId})">
+                <i class="bi bi-save"></i> Save
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    });
+}
+
+function recalcGrade(studentId, maxInt, maxExt) {
+  const i = parseFloat(document.getElementById(`int-${studentId}`).value || 0);
+  const e = parseFloat(document.getElementById(`ext-${studentId}`).value || 0);
+  const total = i + e;
+  const maxTot = maxInt + maxExt;
+  const pct = maxTot > 0 ? (total / maxTot * 100) : 0;
+
+  document.getElementById(`tot-${studentId}`).textContent = total;
+  let grade = 'F';
+  if (pct >= 90) grade = 'O';
+  else if (pct >= 80) grade = 'A+';
+  else if (pct >= 70) grade = 'A';
+  else if (pct >= 60) grade = 'B+';
+  else if (pct >= 50) grade = 'B';
+  else if (pct >= 40) grade = 'C';
+  else if (pct >= 35) grade = 'D';
+
+  const badge = document.getElementById(`grd-${studentId}`);
+  badge.textContent = `${grade} (${pct.toFixed(1)}%)`;
+  badge.className = pct >= 35 ? 'badge bg-success' : 'badge bg-danger';
+}
+
+function saveStudentMark(studentId, subjectId) {
+  const i = document.getElementById(`int-${studentId}`).value;
+  const e = document.getElementById(`ext-${studentId}`).value;
+
+  fetch('/faculty/marks/add', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || ''
+    },
+    body: JSON.stringify({
+      student_id: studentId,
+      subject_id: subjectId,
+      internal_marks: i,
+      external_marks: e
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) alert('Marks saved successfully!');
+    else alert(d.message || 'Error saving marks');
+  });
+}
+</script>
+{% endblock %}

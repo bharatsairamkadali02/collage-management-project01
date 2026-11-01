@@ -1,0 +1,69 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Examinations Management{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="page-title"><i class="bi bi-clipboard-check me-2 text-primary"></i>Examinations Management</h2>
+    <p class="text-muted mb-0">Overview of all online MCQ and semester exams across all departments</p>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Exam Title</th>
+            <th>Subject</th>
+            <th>Class Section</th>
+            <th>Duration</th>
+            <th>Schedule</th>
+            <th>Total Marks</th>
+            <th>Status</th>
+            <th class="text-end pe-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in exams %}
+          <tr>
+            <td class="ps-4 fw-semibold">{{ e.title }}</td>
+            <td>{{ e.subject.subject_name if e.subject else 'N/A' }}</td>
+            <td>{{ e.class_section.section_name if e.class_section else 'All' }}</td>
+            <td><i class="bi bi-stopwatch me-1"></i>{{ e.duration_minutes }} mins</td>
+            <td>
+              <small class="text-muted">
+                {{ e.start_time.strftime('%d %b %Y %H:%M') if e.start_time else 'Anytime' }}
+              </small>
+            </td>
+            <td><span class="badge bg-light text-dark border">{{ e.total_marks }} Marks</span></td>
+            <td>
+              {% if e.status == 'published' or e.status == 'active' %}
+              <span class="badge bg-success-subtle text-success text-capitalize">{{ e.status }}</span>
+              {% elif e.status == 'draft' %}
+              <span class="badge bg-secondary-subtle text-secondary">Draft</span>
+              {% else %}
+              <span class="badge bg-danger-subtle text-danger">Closed</span>
+              {% endif %}
+            </td>
+            <td class="text-end pe-4">
+              <a href="/exam/{{ e.id }}/results" class="btn btn-sm btn-outline-info" title="View Results">
+                <i class="bi bi-bar-chart"></i>
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" class="text-center py-5 text-muted">
+              No examinations created yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

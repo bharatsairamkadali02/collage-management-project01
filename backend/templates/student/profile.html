@@ -1,0 +1,132 @@
+{% extends "student/base_student.html" %}
+
+{% block title %}My Student Profile{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+  <h2 class="page-title"><i class="bi bi-person-badge me-2 text-primary"></i>My Student Profile</h2>
+  <p class="text-muted mb-0">Verified institutional enrollment and personal details</p>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm text-center p-4">
+      <div class="position-relative d-inline-block mx-auto mb-3">
+        {% if photo_url %}
+        <img src="{{ photo_url }}" alt="Profile Photo" class="rounded-circle border border-3 border-primary shadow-sm" style="width: 140px; height: 140px; object-fit: cover;">
+        {% else %}
+        <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto border border-3 border-primary shadow-sm" style="width: 140px; height: 140px; font-size: 3rem; font-weight: bold;">
+          {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+        </div>
+        {% endif %}
+      </div>
+
+      <h5 class="fw-bold mb-1">{{ current_user.get_full_name() }}</h5>
+      <p class="text-muted mb-2"><code>{{ student.student_roll_number }}</code></p>
+      <span class="badge bg-success-subtle text-success px-3 py-2 text-uppercase mb-4">{{ student.academic_status }}</span>
+
+      <div class="border-top pt-3 text-start">
+        <label class="form-label fw-semibold small text-muted">Update Profile Photo (Amazon S3)</label>
+        <form id="photoUploadForm" enctype="multipart/form-data">
+          <input type="file" name="photo" id="photoInput" class="form-control form-control-sm mb-2" accept="image/*" required>
+          <button type="button" class="btn btn-sm btn-primary w-100" onclick="uploadPhoto()">
+            <i class="bi bi-cloud-arrow-up me-1"></i> Upload to S3
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3">
+        <h5 class="card-title fw-bold mb-0">Academic Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <span class="text-muted small d-block">Department:</span>
+            <strong>{{ student.department.department_name if student.department else 'N/A' }} ({{ student.department.department_code if student.department else '' }})</strong>
+          </div>
+          <div class="col-sm-6">
+            <span class="text-muted small d-block">Class Section:</span>
+            <strong>{{ student.current_class_section.section_name if student.current_class_section else 'N/A' }}</strong>
+          </div>
+          <div class="col-sm-6">
+            <span class="text-muted small d-block">Registration Number:</span>
+            <code>{{ student.registration_number or 'N/A' }}</code>
+          </div>
+          <div class="col-sm-6">
+            <span class="text-muted small d-block">Admission Date:</span>
+            <strong>{{ student.admission_date or 'N/A' }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white border-bottom py-3">
+        <h5 class="card-title fw-bold mb-0">Personal & Contact Details</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <span class="text-muted small d-block">Email Address:</span>
+            <strong>{{ current_user.email }}</strong>
+          </div>
+          <div class="col-sm-6">
+            <span class="text-muted small d-block">Phone Number:</span>
+            <strong>{{ current_user.phone or 'Not Provided' }}</strong>
+          </div>
+          <div class="col-sm-6">
+            <span class="text-muted small d-block">Date of Birth:</span>
+            <strong>{{ student.date_of_birth or 'N/A' }}</strong>
+          </div>
+          <div class="col-sm-6">
+            <span class="text-muted small d-block">Gender & Blood Group:</span>
+            <strong>{{ student.gender or 'N/A' }} | {{ student.blood_group or 'N/A' }}</strong>
+          </div>
+          <div class="col-12">
+            <span class="text-muted small d-block">Guardian Information:</span>
+            <strong>{{ student.guardian_name or 'N/A' }} ({{ student.guardian_relation or 'Guardian' }}) - {{ student.guardian_phone or '' }}</strong>
+          </div>
+          <div class="col-12">
+            <span class="text-muted small d-block">Address:</span>
+            <p class="mb-0 text-muted">{{ student.address or '' }}, {{ student.city or '' }} {{ student.state or '' }} {{ student.pincode or '' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function uploadPhoto() {
+  const fileInput = document.getElementById('photoInput');
+  if (!fileInput.files || fileInput.files.length === 0) {
+    alert('Please choose an image file first.');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('photo', fileInput.files[0]);
+
+  fetch('/student/profile/upload-photo', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || ''
+    },
+    body: formData
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.success) {
+      alert('Photo updated successfully!');
+      location.reload();
+    } else {
+      alert(d.message || 'Upload failed');
+    }
+  });
+}
+</script>
+{% endblock %}

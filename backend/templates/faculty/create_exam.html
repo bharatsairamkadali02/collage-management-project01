@@ -1,0 +1,88 @@
+{% extends "faculty/base_faculty.html" %}
+
+{% block title %}Create Examination{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="page-title"><i class="bi bi-file-earmark-plus me-2 text-success"></i>Create MCQ Examination</h2>
+    <p class="text-muted mb-0">Configure exam parameters, schedule, duration, and class assignment</p>
+  </div>
+  <a href="/faculty/examinations" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i> Back to Exams
+  </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-4">
+    <form method="POST" action="/faculty/examinations/create">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-8">
+          <label class="form-label fw-semibold">Exam Title <span class="text-danger">*</span></label>
+          <input type="text" name="title" class="form-control" required placeholder="e.g. Midterm Test 1 - Computer Networks">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Subject <span class="text-danger">*</span></label>
+          <select name="subject_id" class="form-select" required>
+            <option value="">Select Assigned Subject...</option>
+            {% for s in subjects %}
+            <option value="{{ s.id }}">{{ s.subject_name }} ({{ s.subject_code }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Class Section <span class="text-danger">*</span></label>
+          <select name="class_section_id" class="form-select" required>
+            <option value="">Select Section...</option>
+            {% for cs in class_sections %}
+            <option value="{{ cs.id }}">{{ cs.section_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Duration (Minutes) <span class="text-danger">*</span></label>
+          <input type="number" name="duration_minutes" class="form-control" value="60" min="5" max="300" required>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Passing Marks <span class="text-danger">*</span></label>
+          <input type="number" name="passing_marks" class="form-control" value="20" min="1" required>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Start Date & Time (Schedule Window) <span class="text-danger">*</span></label>
+          <input type="datetime-local" name="start_time" class="form-control" required>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">End Date & Time (Schedule Deadline) <span class="text-danger">*</span></label>
+          <input type="datetime-local" name="end_time" class="form-control" required>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label fw-semibold">Instructions for Students</label>
+          <textarea name="instructions" class="form-control" rows="3" placeholder="Provide test instructions, negative marking policies, etc..."></textarea>
+        </div>
+
+        <div class="col-md-6">
+          <div class="form-check form-switch mt-2">
+            <input class="form-check-input" type="checkbox" name="shuffle_questions" id="shuffleCheck" checked>
+            <label class="form-check-label fw-semibold" for="shuffleCheck">Randomize question order for each student</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-end gap-2">
+        <a href="/faculty/examinations" class="btn btn-light border">Cancel</a>
+        <button type="submit" class="btn btn-success px-4">
+          <i class="bi bi-arrow-right me-1"></i> Proceed to Add Questions
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

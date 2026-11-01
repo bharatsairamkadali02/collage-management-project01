@@ -1,0 +1,131 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Attendance Oversight{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="page-title"><i class="bi bi-calendar-check me-2 text-primary"></i>Attendance Oversight</h2>
+    <p class="text-muted mb-0">View institution-wide attendance records, verify percentages, and generate reports</p>
+  </div>
+</div>
+
+<div class="card mb-4 border-0 shadow-sm">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Class Section</label>
+        <select id="classSectionSelect" class="form-select">
+          <option value="">Select Section...</option>
+          {% for cs in class_sections %}
+          <option value="{{ cs.id }}">{{ cs.section_name }} ({{ cs.department.department_code if cs.department else '' }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Subject</label>
+        <select id="subjectSelect" class="form-select">
+          <option value="">All Subjects</option>
+          {% for s in subjects %}
+          <option value="{{ s.id }}">{{ s.subject_name }} ({{ s.subject_code }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4 d-flex align-items-end">
+        <button id="loadReportBtn" class="btn btn-primary w-100" onclick="loadClassReport()">
+          <i class="bi bi-filter me-1"></i> Generate Class Attendance Report
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+    <h5 class="card-title fw-bold mb-0">Student Attendance Summary</h5>
+    <button class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+      <i class="bi bi-printer me-1"></i> Print / Export Report
+    </button>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" id="attendanceReportTable">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-4">Roll Number</th>
+            <th>Student Name</th>
+            <th>Total Sessions</th>
+            <th>Attended</th>
+            <th>Absent</th>
+            <th>Percentage</th>
+            <th>Eligibility Status</th>
+          </tr>
+        </thead>
+        <tbody id="attendanceReportBody">
+          <tr>
+            <td colspan="7" class="text-center py-5 text-muted">
+              Select a class section above and click "Generate Class Attendance Report" to view analytics.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+function loadClassReport() {
+  const classId = document.getElementById('classSectionSelect').value;
+  const subjectId = document.getElementById('subjectSelect').value;
+  if (!classId) {
+    alert('Please select a class section.');
+    return;
+  }
+
+  let url = `/attendance/report/class/${classId}`;
+  if (subjectId) url += `?subject_id=${subjectId}`;
+
+  const tbody = document.getElementById('attendanceReportBody');
+  tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>Loading attendance report...</td></tr>';
+
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      if (!data.success || !data.report || data.report.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No attendance data recorded for this section.</td></tr>';
+        return;
+      }
+
+      let html = '';
+      data.report.forEach(row => {
+        let badgeClass = 'bg-success-subtle text-success';
+        if (row.percentage < 60) badgeClass = 'bg-danger-subtle text-danger';
+        else if (row.percentage < 75) badgeClass = 'bg-warning-subtle text-warning';
+
+        html += `
+          <tr>
+            <td class="ps-4 fw-bold"><code>${row.roll_number || 'N/A'}</code></td>
+            <td class="fw-semibold">${row.name}</td>
+            <td>${row.total}</td>
+            <td class="text-success fw-bold">${row.present + row.late}</td>
+            <td class="text-danger">${row.absent}</td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="progress flex-grow-1" style="height: 6px;">
+                  <div class="progress-bar ${row.percentage >= 75 ? 'bg-success' : (row.percentage >= 60 ? 'bg-warning' : 'bg-danger')}" style="width: ${row.percentage}%"></div>
+                </div>
+                <span class="fw-bold">${row.percentage}%</span>
+              </div>
+            </td>
+            <td><span class="badge ${badgeClass}">${row.status}</span></td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    })
+    .catch(err => {
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Error loading report: ${err.message}</td></tr>`;
+    });
+}
+</script>
+{% endblock %}

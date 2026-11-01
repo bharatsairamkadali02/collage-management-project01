@@ -1,0 +1,52 @@
+{% extends "student/base_student.html" %}
+
+{% block title %}Study Materials & Resources{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+  <h2 class="page-title"><i class="bi bi-folder2-open me-2 text-primary"></i>Study Materials &amp; Syllabi</h2>
+  <p class="text-muted mb-0">Download lecture notes, reference PDFs, and question banks directly from AWS S3</p>
+</div>
+
+<div class="row g-4">
+  {% for m in materials %}
+  <div class="col-md-6 col-lg-4">
+    <div class="card border-0 shadow-sm h-100 p-3">
+      <div class="d-flex align-items-start justify-content-between mb-3">
+        <div class="rounded p-2 bg-primary bg-opacity-10 text-primary">
+          <i class="bi bi-file-earmark-pdf fs-3"></i>
+        </div>
+        <span class="badge bg-light text-dark border text-capitalize">{{ m.material_type }}</span>
+      </div>
+
+      <h6 class="fw-bold mb-1">{{ m.title }}</h6>
+      <small class="text-primary d-block mb-2">{{ m.subject.subject_name if m.subject else 'General' }}</small>
+      <p class="text-muted small mb-4 flex-grow-1">{{ m.description or 'Course reference document.' }}</p>
+
+      <div class="border-top pt-3 d-flex justify-content-between align-items-center">
+        <small class="text-muted">{{ m.file_name }}</small>
+        <button class="btn btn-sm btn-outline-primary" onclick="downloadS3Material({{ m.id }})">
+          <i class="bi bi-download me-1"></i> Download
+        </button>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12 text-center py-5 text-muted">
+    <i class="bi bi-folder-x fs-1 d-block mb-2"></i>
+    No study materials available at this time.
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+function downloadS3Material(id) {
+  fetch(`/student/materials/${id}/download`)
+    .then(r => r.json())
+    .then(d => {
+      if (d.success && d.download_url) window.open(d.download_url, '_blank');
+      else alert('Error accessing document in AWS S3.');
+    });
+}
+</script>
+{% endblock %}

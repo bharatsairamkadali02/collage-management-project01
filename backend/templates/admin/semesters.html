@@ -1,0 +1,176 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Academic Years & Semesters{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="page-title"><i class="bi bi-calendar3 me-2 text-primary"></i>Academic Years & Semesters</h2>
+    <p class="text-muted mb-0">Configure academic calendar terms, dates, and active semesters</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addYearModal">
+      <i class="bi bi-plus-lg me-1"></i> Add Academic Year
+    </button>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSemModal">
+      <i class="bi bi-plus-lg me-1"></i> Add Semester
+    </button>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white border-bottom py-3">
+        <h5 class="card-title fw-bold mb-0">Academic Years</h5>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3">Label</th>
+                <th>Dates</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for y in academic_years %}
+              <tr>
+                <td class="ps-3 fw-bold">{{ y.year_label }}</td>
+                <td><small class="text-muted">{{ y.start_date }} - {{ y.end_date }}</small></td>
+                <td>
+                  {% if y.is_current %}
+                  <span class="badge bg-success">Current</span>
+                  {% else %}
+                  <span class="badge bg-secondary">Archived</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="3" class="text-center py-4 text-muted">No academic years configured.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white border-bottom py-3">
+        <h5 class="card-title fw-bold mb-0">Semesters</h5>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3">Semester</th>
+                <th>Academic Year</th>
+                <th>Dates</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in semesters %}
+              <tr>
+                <td class="ps-3 fw-semibold">Semester {{ s.semester_number }} ({{ s.semester_name or 'Regular' }})</td>
+                <td>{{ s.academic_year.year_label if s.academic_year else 'N/A' }}</td>
+                <td><small class="text-muted">{{ s.start_date }} to {{ s.end_date }}</small></td>
+                <td>
+                  {% if s.is_current %}
+                  <span class="badge bg-success">Active</span>
+                  {% else %}
+                  <span class="badge bg-light text-dark border">Completed</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="4" class="text-center py-4 text-muted">No semesters registered.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Year Modal -->
+<div class="modal fade" id="addYearModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Add Academic Year</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('admin.add_academic_year') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Year Label <span class="text-danger">*</span></label>
+            <input type="text" name="year_label" class="form-control" required placeholder="e.g. 2024-2025">
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">Start Date</label>
+              <input type="date" name="start_date" class="form-control" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">End Date</label>
+              <input type="date" name="end_date" class="form-control" required>
+            </div>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="is_current" id="yearCurrentCheck" checked>
+            <label class="form-check-label" for="yearCurrentCheck">Set as Current Active Year</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Year</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Add Sem Modal -->
+<div class="modal fade" id="addSemModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Add Semester</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('admin.add_semester') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Academic Year <span class="text-danger">*</span></label>
+            <select name="academic_year_id" class="form-select" required>
+              {% for y in academic_years %}
+              <option value="{{ y.id }}">{{ y.year_label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Semester Number (1-8) <span class="text-danger">*</span></label>
+            <input type="number" name="semester_number" class="form-control" min="1" max="8" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Semester Name</label>
+            <input type="text" name="semester_name" class="form-control" placeholder="e.g. Fall 2024 / Odd Term">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Semester</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

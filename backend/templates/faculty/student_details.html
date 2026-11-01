@@ -1,0 +1,227 @@
+{% extends "faculty/base_faculty.html" %}
+
+{% block page_title %}Student Details{% endblock %}
+
+{% block faculty_content %}
+<div class="mb-4">
+  <a href="/faculty/students" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back to Students</a>
+</div>
+
+<!-- Student Info Card -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <div class="row align-items-center g-4">
+      <div class="col-auto">
+        <div class="rounded-3 overflow-hidden bg-light d-flex align-items-center justify-content-center" style="width:100px;height:100px;">
+          {% if student.photo %}
+          <img src="{{ student.photo }}" class="w-100 h-100" style="object-fit:cover;" alt="{{ student.name }}">
+          {% else %}
+          <i class="bi bi-person-fill text-secondary" style="font-size:3rem;"></i>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col">
+        <h4 class="fw-bold mb-1">{{ student.name | default('Aarav Sharma') }}</h4>
+        <div class="d-flex flex-wrap gap-2 mb-2">
+          <span class="badge bg-light text-dark border"><i class="bi bi-tag me-1"></i>{{ student.roll_number | default('CS21001') }}</span>
+          <span class="badge bg-light text-dark border"><i class="bi bi-building me-1"></i>{{ student.department | default('Computer Science') }}</span>
+          <span class="badge bg-light text-dark border"><i class="bi bi-collection me-1"></i>{{ student.class_section | default('CS-3A') }}</span>
+          <span class="badge bg-light text-dark border"><i class="bi bi-layers me-1"></i>Semester {{ student.semester | default(5) }}</span>
+        </div>
+        <div class="text-muted small">{{ student.email | default('aarav.sharma@college.edu') }}</div>
+      </div>
+      <div class="col-auto text-end">
+        <div class="text-muted small mb-1">Overall Attendance</div>
+        <div class="fs-2 fw-bold {% if (student.overall_attendance | default(78)) >= 75 %}text-success{% else %}text-danger{% endif %}">
+          {{ student.overall_attendance | default(78) }}%
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white border-bottom">
+    <ul class="nav nav-tabs card-header-tabs" id="studentTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendancePane" type="button" role="tab">
+          <i class="bi bi-calendar-check me-1"></i>Attendance
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="results-tab" data-bs-toggle="tab" data-bs-target="#resultsPane" type="button" role="tab">
+          <i class="bi bi-clipboard-data me-1"></i>Exam Results
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="marks-tab" data-bs-toggle="tab" data-bs-target="#marksPane" type="button" role="tab">
+          <i class="bi bi-bar-chart me-1"></i>Semester Marks
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="assignments-tab" data-bs-toggle="tab" data-bs-target="#assignmentsPane" type="button" role="tab">
+          <i class="bi bi-journal-bookmark me-1"></i>Assignments
+        </button>
+      </li>
+    </ul>
+  </div>
+  <div class="card-body tab-content p-0" id="studentTabsContent">
+
+    <!-- Attendance Tab -->
+    <div class="tab-pane fade show active p-3" id="attendancePane" role="tabpanel">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-3">Subject</th>
+              <th>Total Sessions</th>
+              <th>Present</th>
+              <th>Absent</th>
+              <th>Late</th>
+              <th>Percentage</th>
+              <th>Progress</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for subj in attendance_subjects | default([
+              {'name':'Data Structures','total':30,'present':25,'absent':4,'late':1},
+              {'name':'Algorithms','total':28,'present':19,'absent':8,'late':1},
+              {'name':'DBMS','total':32,'present':30,'absent':2,'late':0},
+              {'name':'OS','total':26,'present':14,'absent':10,'late':2}
+            ]) %}
+            {% set pct = ((subj.present / subj.total) * 100) | round(1) %}
+            <tr>
+              <td class="ps-3 fw-semibold">{{ subj.name }}</td>
+              <td>{{ subj.total }}</td>
+              <td class="text-success fw-semibold">{{ subj.present }}</td>
+              <td class="text-danger fw-semibold">{{ subj.absent }}</td>
+              <td class="text-warning fw-semibold">{{ subj.late }}</td>
+              <td>
+                <span class="fw-bold {% if pct >= 75 %}text-success{% elif pct >= 60 %}text-warning{% else %}text-danger{% endif %}">{{ pct }}%</span>
+              </td>
+              <td style="min-width:120px;">
+                <div class="progress" style="height:8px;">
+                  <div class="progress-bar {% if pct >= 75 %}bg-success{% elif pct >= 60 %}bg-warning{% else %}bg-danger{% endif %}" style="width:{{ pct }}%;"></div>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Exam Results Tab -->
+    <div class="tab-pane fade p-3" id="resultsPane" role="tabpanel">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-3">Exam</th>
+              <th>Date</th>
+              <th>Score</th>
+              <th>Percentage</th>
+              <th>Grade</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for attempt in exam_results | default([
+              {'exam':'Mid-Term DS','date':'10 Oct 2025','score':'42/50','pct':84,'grade':'A','passed':true},
+              {'exam':'Unit Test 1 Algo','date':'5 Oct 2025','score':'36/50','pct':72,'grade':'B','passed':true},
+              {'exam':'DBMS Quiz 2','date':'1 Oct 2025','score':'28/50','pct':56,'grade':'D','passed':false}
+            ]) %}
+            <tr>
+              <td class="ps-3 fw-semibold">{{ attempt.exam }}</td>
+              <td class="text-muted small">{{ attempt.date }}</td>
+              <td>{{ attempt.score }}</td>
+              <td>{{ attempt.pct }}%</td>
+              <td><span class="badge bg-primary">{{ attempt.grade }}</span></td>
+              <td><span class="badge {% if attempt.passed %}bg-success{% else %}bg-danger{% endif %}">{{ 'Pass' if attempt.passed else 'Fail' }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Semester Marks Tab -->
+    <div class="tab-pane fade p-3" id="marksPane" role="tabpanel">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-3">Subject</th>
+              <th>Internal (/40)</th>
+              <th>External (/60)</th>
+              <th>Practical (/20)</th>
+              <th>Total</th>
+              <th>Percentage</th>
+              <th>Grade</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for mark in semester_marks | default([
+              {'subject':'Data Structures','internal':34,'external':50,'practical':18,'total':102,'max':120,'pct':85,'grade':'A'},
+              {'subject':'Algorithms','internal':28,'external':44,'practical':0,'max':100,'total':72,'pct':72,'grade':'B'},
+              {'subject':'DBMS','internal':36,'external':52,'practical':16,'total':104,'max':120,'pct':86.7,'grade':'A'}
+            ]) %}
+            <tr>
+              <td class="ps-3 fw-semibold">{{ mark.subject }}</td>
+              <td>{{ mark.internal }}</td>
+              <td>{{ mark.external }}</td>
+              <td>{{ mark.practical }}</td>
+              <td class="fw-semibold">{{ mark.total }}/{{ mark.max }}</td>
+              <td>{{ mark.pct }}%</td>
+              <td><span class="badge bg-primary">{{ mark.grade }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Assignments Tab -->
+    <div class="tab-pane fade p-3" id="assignmentsPane" role="tabpanel">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-3">Title</th>
+              <th>Subject</th>
+              <th>Due Date</th>
+              <th>Submitted On</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for asgn in assignments | default([
+              {'title':'DS Tree Implementation','subject':'Data Structures','due':'10 Nov','submitted':'9 Nov','status':'submitted'},
+              {'title':'Algo Analysis Report','subject':'Algorithms','due':'15 Nov','submitted':None,'status':'pending'},
+              {'title':'ER Diagram Design','subject':'DBMS','due':'12 Nov','submitted':'11 Nov','status':'submitted'}
+            ]) %}
+            <tr>
+              <td class="ps-3 fw-semibold">{{ asgn.title }}</td>
+              <td class="text-muted small">{{ asgn.subject }}</td>
+              <td class="text-muted small">{{ asgn.due }}</td>
+              <td class="small">{{ asgn.submitted if asgn.submitted else '—' }}</td>
+              <td>
+                {% if asgn.status == 'submitted' %}
+                  <span class="badge bg-success">Submitted</span>
+                {% elif asgn.status == 'pending' %}
+                  <span class="badge bg-warning text-dark">Pending</span>
+                {% else %}
+                  <span class="badge bg-danger">Late</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock faculty_content %}

@@ -1,0 +1,191 @@
+{% extends "student/base_student.html" %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block student_content %}
+<!-- Welcome Card -->
+<div class="card border-0 shadow-sm mb-4" style="background:linear-gradient(135deg,#6a1b9a,#ab47bc);">
+  <div class="card-body d-flex align-items-center justify-content-between py-4 px-4">
+    <div>
+      <h4 class="text-white mb-1 fw-bold">Welcome, {{ current_user.get_full_name() if current_user else 'Student' }}!</h4>
+      <p class="text-white-75 mb-1">
+        <span class="badge bg-white text-purple me-2" style="color:#6a1b9a;">{{ current_user.roll_number if current_user else 'CS21001' }}</span>
+        <span class="badge bg-white-50 text-white">{{ current_user.department if current_user else 'Computer Science' }}</span>
+      </p>
+      <p class="text-white-75 mb-0 small"><i class="bi bi-calendar3 me-1"></i>Semester {{ current_user.semester if current_user else '5' }} &bull; {{ now.strftime('%A, %d %B %Y') if now else 'Today' }}</p>
+    </div>
+    <i class="bi bi-mortarboard-fill text-white" style="font-size:3rem;opacity:0.8;"></i>
+  </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center py-3">
+        <div class="fs-1 fw-bold" style="color:#6a1b9a;">{{ stats.attendance_pct | default('78') }}%</div>
+        <div class="text-muted small">Overall Attendance</div>
+        <div class="progress mt-2" style="height:6px;">
+          <div class="progress-bar" style="width:{{ stats.attendance_pct | default(78) }}%;background:#6a1b9a;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center py-3">
+        <div class="fs-1 fw-bold text-warning">{{ stats.upcoming_exams | default(3) }}</div>
+        <div class="text-muted small">Upcoming Exams</div>
+        <i class="bi bi-clipboard-check text-warning fs-4 mt-2 d-block"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center py-3">
+        <div class="fs-1 fw-bold text-danger">{{ stats.pending_assignments | default(2) }}</div>
+        <div class="text-muted small">Pending Assignments</div>
+        <i class="bi bi-journal-bookmark text-danger fs-4 mt-2 d-block"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body text-center py-3">
+        <div class="fs-1 fw-bold text-info">₹{{ stats.fee_balance | default('12,500') }}</div>
+        <div class="text-muted small">Fee Balance</div>
+        <i class="bi bi-credit-card text-info fs-4 mt-2 d-block"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Attendance per Subject -->
+  <div class="col-12 col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-3">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-calendar-check me-2" style="color:#6a1b9a;"></i>My Attendance</h6>
+        <a href="/student/attendance" class="btn btn-sm btn-outline-secondary">Details</a>
+      </div>
+      <div class="card-body">
+        {% for subj in attendance_subjects | default([
+          {'name':'Data Structures','pct':82},
+          {'name':'Algorithms','pct':67},
+          {'name':'DBMS','pct':91},
+          {'name':'OS','pct':55},
+          {'name':'Computer Networks','pct':76}
+        ]) %}
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="small fw-semibold">{{ subj.name }}</span>
+            <span class="small {% if subj.pct >= 75 %}text-success{% elif subj.pct >= 60 %}text-warning{% else %}text-danger{% endif %} fw-bold">{{ subj.pct }}%</span>
+          </div>
+          <div class="progress" style="height:8px;">
+            <div class="progress-bar {% if subj.pct >= 75 %}bg-success{% elif subj.pct >= 60 %}bg-warning{% else %}bg-danger{% endif %}" style="width:{{ subj.pct }}%;"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Upcoming Examinations -->
+  <div class="col-12 col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-3">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-clipboard-check me-2" style="color:#6a1b9a;"></i>Upcoming Examinations</h6>
+        <a href="/student/examinations" class="btn btn-sm btn-outline-secondary">All Exams</a>
+      </div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for exam in upcoming_exams | default([
+            {'title':'Mid-Term: Data Structures','subject':'Data Structures','date':'15 Nov','time':'10:00 AM','duration':60,'active':true},
+            {'title':'Unit Test: DBMS','subject':'DBMS','date':'18 Nov','time':'2:00 PM','duration':45,'active':false},
+            {'title':'Algorithms Quiz','subject':'Algorithms','date':'20 Nov','time':'11:00 AM','duration':30,'active':false}
+          ]) %}
+          <li class="list-group-item px-3 py-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <div class="fw-semibold small">{{ exam.title }}</div>
+                <div class="text-muted" style="font-size:0.78rem;">
+                  <i class="bi bi-calendar3 me-1"></i>{{ exam.date }} &bull; {{ exam.time }} &bull; {{ exam.duration }} min
+                </div>
+              </div>
+              {% if exam.active %}
+              <a href="/student/examinations" class="btn btn-sm btn-success">Take Exam</a>
+              {% else %}
+              <span class="badge bg-secondary">Upcoming</span>
+              {% endif %}
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Latest Results -->
+  <div class="col-12 col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-3">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-bar-chart-line me-2" style="color:#6a1b9a;"></i>Latest Results</h6>
+        <a href="/student/results" class="btn btn-sm btn-outline-secondary">All Results</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr><th class="ps-3">Subject</th><th>Marks</th><th>Grade</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              {% for res in latest_results | default([
+                {'subject':'Data Structures','marks':'42/50','grade':'A','pass':true},
+                {'subject':'Algorithms','marks':'35/50','grade':'B','pass':true},
+                {'subject':'DBMS','marks':'28/50','grade':'C','pass':true}
+              ]) %}
+              <tr>
+                <td class="ps-3 small fw-semibold">{{ res.subject }}</td>
+                <td class="small">{{ res.marks }}</td>
+                <td><span class="badge bg-primary">{{ res.grade }}</span></td>
+                <td><span class="badge {% if res.pass %}bg-success{% else %}bg-danger{% endif %}">{{ 'Pass' if res.pass else 'Fail' }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Notifications -->
+  <div class="col-12 col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-3">
+        <h6 class="mb-0 fw-bold"><i class="bi bi-bell me-2" style="color:#6a1b9a;"></i>Recent Notifications</h6>
+        <a href="/student/notifications" class="btn btn-sm btn-outline-secondary">All</a>
+      </div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for notif in recent_notifications | default([
+            {'title':'Exam Schedule Released','msg':'Mid-term exams scheduled for Nov 15-20.','type':'info','unread':true,'time':'2h ago'},
+            {'title':'Assignment Due Tomorrow','msg':'DS Assignment 3 is due tomorrow.','type':'warning','unread':true,'time':'5h ago'},
+            {'title':'Fee Reminder','msg':'Semester fee due date is Nov 30.','type':'danger','unread':false,'time':'1d ago'}
+          ]) %}
+          <li class="list-group-item px-3 py-2 {% if notif.unread %}bg-light{% endif %}">
+            <div class="d-flex align-items-start gap-2">
+              <span class="badge bg-{{ notif.type }} mt-1" style="font-size:0.6rem;">&#9679;</span>
+              <div class="flex-grow-1">
+                <div class="small fw-semibold">{{ notif.title }}</div>
+                <div class="text-muted" style="font-size:0.78rem;">{{ notif.msg }}</div>
+              </div>
+              <span class="text-muted" style="font-size:0.72rem;white-space:nowrap;">{{ notif.time }}</span>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock student_content %}

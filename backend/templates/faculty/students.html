@@ -1,0 +1,134 @@
+{% extends "faculty/base_faculty.html" %}
+
+{% block page_title %}My Students{% endblock %}
+
+{% block faculty_content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h5 class="fw-bold mb-1">My Students</h5>
+    <p class="text-muted mb-0 small">Manage and view students assigned to your classes</p>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <form method="GET" action="/faculty/students" class="row g-3 align-items-end">
+      <div class="col-12 col-md-4">
+        <label class="form-label fw-semibold small">Class Section</label>
+        <select name="section" class="form-select">
+          <option value="">All Sections</option>
+          {% for section in assigned_sections | default(['CS-3A','CS-3B','CS-4A','CS-4B']) %}
+          <option value="{{ section }}" {% if request.args.get('section') == section %}selected{% endif %}>{{ section }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-5">
+        <label class="form-label fw-semibold small">Search Student</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" name="search" class="form-control" placeholder="Name or Roll Number..." value="{{ request.args.get('search','') }}">
+        </div>
+      </div>
+      <div class="col-12 col-md-3 d-flex gap-2">
+        <button type="submit" class="btn flex-grow-1" style="background:#0d6e6e;color:#fff;">Filter</button>
+        <a href="/faculty/students" class="btn btn-outline-secondary">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Students Table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+    <h6 class="mb-0 fw-bold"><i class="bi bi-people me-2" style="color:#0d6e6e;"></i>Student List</h6>
+    <span class="badge bg-secondary">{{ students|length if students else 4 }} students</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-3" style="width:60px;">Photo</th>
+            <th>Name</th>
+            <th>Roll No</th>
+            <th>Section</th>
+            <th>Attendance %</th>
+            <th>Last Exam Score</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in students | default([
+            {'id':1,'name':'Aarav Sharma','roll':'CS21001','section':'CS-3A','attendance':82,'last_score':85,'photo':None},
+            {'id':2,'name':'Priya Patel','roll':'CS21002','section':'CS-3A','attendance':67,'last_score':72,'photo':None},
+            {'id':3,'name':'Rohan Verma','roll':'CS21003','section':'CS-3B','attendance':91,'last_score':91,'photo':None},
+            {'id':4,'name':'Sneha Rao','roll':'CS21004','section':'CS-3B','attendance':55,'last_score':63,'photo':None}
+          ]) %}
+          <tr>
+            <td class="ps-3">
+              {% if student.photo %}
+              <img src="{{ student.photo }}" class="rounded-circle" width="40" height="40" style="object-fit:cover;" alt="{{ student.name }}">
+              {% else %}
+              <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                <i class="bi bi-person-fill text-secondary"></i>
+              </div>
+              {% endif %}
+            </td>
+            <td class="fw-semibold">{{ student.name }}</td>
+            <td><code>{{ student.roll }}</code></td>
+            <td><span class="badge bg-light text-dark border">{{ student.section }}</span></td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="progress flex-grow-1" style="height:6px;max-width:80px;">
+                  <div class="progress-bar {% if student.attendance >= 75 %}bg-success{% elif student.attendance >= 60 %}bg-warning{% else %}bg-danger{% endif %}" style="width:{{ student.attendance }}%;"></div>
+                </div>
+                <span class="small {% if student.attendance >= 75 %}text-success{% elif student.attendance >= 60 %}text-warning{% else %}text-danger{% endif %} fw-bold">{{ student.attendance }}%</span>
+              </div>
+            </td>
+            <td>
+              <span class="badge {% if student.last_score >= 80 %}bg-success{% elif student.last_score >= 60 %}bg-warning text-dark{% else %}bg-danger{% endif %}">{{ student.last_score }}</span>
+            </td>
+            <td>
+              <a href="/faculty/students/{{ student.id }}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-person-lines-fill me-1"></i>View Profile
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  {% if pagination and pagination.pages > 1 %}
+  <div class="card-footer bg-white border-top d-flex align-items-center justify-content-between py-3">
+    <small class="text-muted">Showing {{ pagination.start }}&ndash;{{ pagination.end }} of {{ pagination.total }} students</small>
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        {% if pagination.has_prev %}
+        <li class="page-item"><a class="page-link" href="?page={{ pagination.prev_num }}">Previous</a></li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        {% endif %}
+        {% for p in pagination.iter_pages() %}
+          {% if p %}
+          <li class="page-item {% if p == pagination.page %}active{% endif %}">
+            <a class="page-link" href="?page={{ p }}">{{ p }}</a>
+          </li>
+          {% else %}
+          <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        {% if pagination.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ pagination.next_num }}">Next</a></li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock faculty_content %}
